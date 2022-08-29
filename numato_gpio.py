@@ -30,16 +30,14 @@ class numato_gpio(object):
         else:
             gpioIndex = chr(55 + int(gpioInput))
 
-        #Send "gpio read" command
-        payload = "gpio read %s \r" % str(gpioIndex)
-
         self.serPort.reset_input_buffer()
 
+        # Send "gpio read" command
+        payload = "gpio read %s \r" % str(gpioIndex)
         self.serPort.write(payload.encode())
 
         command_echoed = self.serPort.read_until(b'\r')
         response = self.serPort.read_until(b'\r')
-
 
         response_value = -1
 
@@ -78,11 +76,10 @@ class numato_gpio(object):
         else:
             gpioIndex = chr(55 + int(gpioInput))
 
-        #Send "gpio read" command
-        payload = "gpio %s %s\r" % (command, gpioIndex)
-
         self.serPort.reset_input_buffer()
 
+        # Send "gpio xxx" command
+        payload = "gpio %s %s\r" % (command, gpioIndex)
         self.serPort.write(payload.encode())
 
         command_echoed = self.serPort.read_until(b'\r')
