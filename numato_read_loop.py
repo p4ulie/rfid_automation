@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime
 # from distutils.util import strtobool
 import numato_gpio
 
@@ -12,8 +13,9 @@ if __name__ == '__main__':
 
     try:
         while True:
-            print(numato_gpio.read(1))
-            time.sleep(0.2)
+            print("%s: %s" % (datetime.now(), numato_gpio.read(2)))
+            time.sleep(1)
+            numato_gpio.set(0)
     except KeyboardInterrupt:
         pass
 

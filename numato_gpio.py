@@ -31,17 +31,21 @@ class numato_gpio(object):
             gpioIndex = chr(55 + int(gpioInput))
 
         #Send "gpio read" command
-        self.serPort.write("gpio read "+ str(gpioIndex) + "\r")
+        payload = "gpio read %s \r" % str(gpioIndex)
 
-        # Read up to 25 bytes
-        response = self.serPort.read(25)
+        self.serPort.reset_input_buffer()
+
+        self.serPort.write(payload.encode())
+
+        command_echoed = self.serPort.read_until(b'\r')
+        response = self.serPort.read_until(b'\r')
+
 
         response_value = -1
 
-        if(response[-4] == "1"):
+        if(chr(response[-3]) == "1"):
             response_value = 1
-
-        elif(response[-4] == "0"):
+        elif(chr(response[-3]) == "0"):
             response_value = 0
 
         return response_value
@@ -75,7 +79,13 @@ class numato_gpio(object):
             gpioIndex = chr(55 + int(gpioInput))
 
         #Send "gpio read" command
-        self.serPort.write("gpio "+ command +" "+ gpioIndex  + "\r")
+        payload = "gpio %s %s\r" % (command, gpioIndex)
+
+        self.serPort.reset_input_buffer()
+
+        self.serPort.write(payload.encode())
+
+        command_echoed = self.serPort.read_until(b'\r')
 
     def close(self):
         """Close serial port
