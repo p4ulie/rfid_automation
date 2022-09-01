@@ -1,8 +1,12 @@
 import tkinter as tk
+import numato_gpio
+
+PORT_NAME = "/dev/ttyACM1"
+PORT_SPEED = 19200
 
 IO_count = range(16)
 IO_list = [0 for x in IO_count]
-widget_list_oval = []
+IO_read_enabled = False
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -17,14 +21,8 @@ class Application(tk.Frame):
         self.canvas = tk.Canvas(master=window, width=320, height=200)
         # self.canvas.pack()
 
-        # self.hi_there = tk.Button(self)
-        # self.hi_there["text"] = "Hello World\n(click me)"
-        # self.hi_there["command"] = self.say_hi
-        # self.hi_there.pack(side="top")
-        #
-        # self.quit = tk.Button(self, text="QUIT", fg="red",
-        #                       command=self.master.destroy)
-        # self.quit.pack(side="bottom")
+        self.IO_read_enable = tk.Button(self, text="Enable", command=self.IO_read_enable)
+        self.IO_read_enable.pack(side="bottom")
 
     def create_IO_labels(self):
         start_x = 10
@@ -80,13 +78,29 @@ class Application(tk.Frame):
 
         self.canvas.pack()
 
-def update_IO_widgets():
-    app.update_IO_widgets()
-    window.after(200, update_IO_widgets)  # reschedule event in 2 seconds
+    def IO_read_enable(self):
+        global IO_read_enabled
+        IO_read_enabled = not(IO_read_enabled)
+        if IO_read_enabled == True:
+            self.IO_read_enable["text"]="Disable"
+        else:
+            self.IO_read_enable["text"]="Enable"
+
+def task_update_IO_widgets():
+    if IO_read_enabled == True:
+        IO_inputs = numato_gpio.readall()
+        IO_inputs_binary_str = "{:016b}".format(IO_inputs)
+        # print(IO_inputs_binary_str)
+        for i in range(16):
+            IO_list[15-i] = int(IO_inputs_binary_str[i])
+        app.update_IO_widgets()
+    window.after(200, task_update_IO_widgets)  # reschedule event in 2 seconds
 
 
 if __name__ == '__main__':
+    numato_gpio = numato_gpio.numato_gpio(PORT_NAME, PORT_SPEED, timeout=1)
+
     window = tk.Tk()
     app = Application(master=window)
-    window.after(200, update_IO_widgets)
+    window.after(200, task_update_IO_widgets)
     app.mainloop()
