@@ -48,6 +48,24 @@ class numato_gpio(object):
 
         return response_value
 
+    def readall(self):
+        """Read all value on GPIO inputs at once
+        Arguments:
+        """
+
+        self.serPort.reset_input_buffer()
+
+        # Send "gpio readall" command
+        payload = "gpio readall\r"
+        self.serPort.write(payload.encode())
+
+        command_echoed = self.serPort.read_until(b'\r')
+        response = self.serPort.read_until(b'\r')
+
+        response_value = response[-3]
+
+        return response_value
+
     def set(self, gpioInput):
         """Set output status for GPIO input to 1 (high)
         Arguments:

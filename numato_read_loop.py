@@ -14,6 +14,7 @@ if __name__ == '__main__':
     try:
         while True:
             print("%s: %s" % (datetime.now(), numato_gpio.read(2)))
+            print("%s: %s" % (datetime.now(), numato_gpio.readall()))
             time.sleep(1)
             numato_gpio.set(0)
     except KeyboardInterrupt:
