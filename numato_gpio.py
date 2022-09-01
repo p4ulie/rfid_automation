@@ -66,6 +66,20 @@ class numato_gpio(object):
 
         return response_value
 
+    def writeall(self, gpioInput):
+        """Write all values on GPIO inputs at once
+        Arguments:
+            gpioInput: bit encoded set of input to enable (ffff all, 0 none)
+        """
+
+        self.serPort.reset_input_buffer()
+
+        # Send "gpio writeall" command
+        payload = "gpio writeall %s\r" % str("{0:0{1}x}".format(gpioInput,4))
+        self.serPort.write(payload.encode())
+
+        command_echoed = self.serPort.read_until(b'\r')
+
     def set(self, gpioInput):
         """Set output status for GPIO input to 1 (high)
         Arguments:
