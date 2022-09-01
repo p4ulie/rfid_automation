@@ -1,8 +1,9 @@
-# import sys
 import serial
 
 class numato_gpio(object):
-    """Class for sending and receiving data via Numato GPIO board"""
+    """Class for sending and receiving data via Numato GPIO board
+        Documentation: https://numato.com/docs/16-channel-usb-gpio-module-with-analog-inputs/
+    """
 
     def __init__(self, port, speed, timeout=1):
         """Open serial port at specified baud speed
@@ -49,7 +50,7 @@ class numato_gpio(object):
         return response_value
 
     def readall(self):
-        """Read all value on GPIO inputs at once
+        """Read all value on GPIO inputs in single operation
         Arguments:
         """
 
@@ -67,7 +68,7 @@ class numato_gpio(object):
         return response_value
 
     def writeall(self, gpioInput):
-        """Write all values on GPIO inputs at once
+        """Write all values on GPIO in single operation
         Arguments:
             gpioInput: bit encoded set of input to enable (ffff all, 0 none)
         """
@@ -76,6 +77,34 @@ class numato_gpio(object):
 
         # Send "gpio writeall" command
         payload = "gpio writeall %s\r" % str("{0:0{1}x}".format(gpioInput,4))
+        self.serPort.write(payload.encode())
+
+        command_echoed = self.serPort.read_until(b'\r')
+
+    def iodir(self, gpioInput):
+        """Set the direction of all GPIO in single operation
+        Arguments:
+            gpioInput: bit encoded set of GPIO directions (1 input, 0 output)
+        """
+
+        self.serPort.reset_input_buffer()
+
+        # Send "gpio iodir" command
+        payload = "gpio iodir %s\r" % str("{0:0{1}x}".format(gpioInput,4))
+        self.serPort.write(payload.encode())
+
+        command_echoed = self.serPort.read_until(b'\r')
+
+    def iomask(self, gpioInput):
+        """Set mask for selectively update multiple GPIO with writeall/iodir command
+        Arguments:
+            gpioInput: bit encoded mask of GPIO directions (1 unmask, 0 mask)
+        """
+
+        self.serPort.reset_input_buffer()
+
+        # Send "gpio iomask" command
+        payload = "gpio iomask %s\r" % str("{0:0{1}x}".format(gpioInput,4))
         self.serPort.write(payload.encode())
 
         command_echoed = self.serPort.read_until(b'\r')
