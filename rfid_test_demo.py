@@ -1,6 +1,7 @@
 import numato_gpio
 import configparser
 import time
+from evdev import InputDevice, categorize, ecodes
 
 def loop():
     while True:
@@ -24,6 +25,8 @@ if __name__ == '__main__':
         config['GpioDeviceSettings']['Name'],
         config['GpioDeviceSettings']['Speed'],
         timeout=1)
+
+    rfid_reader = config['RfidReaderDeviceSettings']['Name']
 
     loop()
 
