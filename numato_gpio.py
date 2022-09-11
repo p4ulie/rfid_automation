@@ -20,8 +20,9 @@ class numato_gpio(object):
         #Open port for communication
         self.serPort = serial.Serial(self.port, self.speed, timeout=self.timeout)
 
-    def read(self, gpioInput):
-        """Read value on GPIO input
+    def _getgpioindexstr(self, gpioInput):
+        """Convert GPIO input numerical value to hex based character (0-9, A-F)
+        string
         Arguments:
             gpioInput: number of the GPIO input (0-15)
         """
@@ -29,15 +30,20 @@ class numato_gpio(object):
         if (int(gpioInput) < 10):
             gpioIndex = str(gpioInput)
         else:
-            gpioIndex = chr(55 + int(gpioInput))
+            gpioIndex = str(chr(55 + int(gpioInput)))
 
-        self.serPort.reset_input_buffer()
+        return gpioIndex
 
-        # Send "gpio read" command
-        payload = "gpio read %s \r" % str(gpioIndex)
-        self.serPort.write(payload.encode())
+    def read(self, gpioInput):
+        """Read value on GPIO input
+        Arguments:
+            gpioInput: number of the GPIO input (0-15)
+        """
 
-        command_echoed = self.serPort.read_until(b'\r')
+        payload = "gpio read %s \r" % self._getgpioindexstr(gpioInput)
+
+        self._command(payload)
+
         response = self.serPort.read_until(b'\r')
 
         response_value = -1
@@ -54,13 +60,10 @@ class numato_gpio(object):
         Arguments:
         """
 
-        self.serPort.reset_input_buffer()
-
-        # Send "gpio readall" command
         payload = "gpio readall\r"
-        self.serPort.write(payload.encode())
 
-        command_echoed = self.serPort.read_until(b'\r')
+        self._command(payload)
+
         response = self.serPort.read_until(b'\r')
 
         response_value = response[-3]
@@ -73,13 +76,9 @@ class numato_gpio(object):
             gpioInput: bit encoded set of input to enable (ffff all, 0 none)
         """
 
-        self.serPort.reset_input_buffer()
-
-        # Send "gpio writeall" command
         payload = "gpio writeall %s\r" % str("{0:0{1}x}".format(gpioInput,4))
-        self.serPort.write(payload.encode())
 
-        command_echoed = self.serPort.read_until(b'\r')
+        self._command(payload)
 
     def iodir(self, gpioInput):
         """Set the direction of all GPIO in single operation
@@ -87,13 +86,9 @@ class numato_gpio(object):
             gpioInput: bit encoded set of GPIO directions (1 input, 0 output)
         """
 
-        self.serPort.reset_input_buffer()
-
-        # Send "gpio iodir" command
         payload = "gpio iodir %s\r" % str("{0:0{1}x}".format(gpioInput,4))
-        self.serPort.write(payload.encode())
 
-        command_echoed = self.serPort.read_until(b'\r')
+        self._command(payload)
 
     def iomask(self, gpioInput):
         """Set mask for selectively update multiple GPIO with writeall/iodir command
@@ -101,13 +96,9 @@ class numato_gpio(object):
             gpioInput: bit encoded mask of GPIO directions (1 unmask, 0 mask)
         """
 
-        self.serPort.reset_input_buffer()
-
-        # Send "gpio iomask" command
         payload = "gpio iomask %s\r" % str("{0:0{1}x}".format(gpioInput,4))
-        self.serPort.write(payload.encode())
 
-        command_echoed = self.serPort.read_until(b'\r')
+        self._command(payload)
 
     def set(self, gpioInput):
         """Set output status for GPIO input to 1 (high)
@@ -115,7 +106,9 @@ class numato_gpio(object):
             gpioInput: number of the GPIO input (0-15)
         """
 
-        self.command(gpioInput, "set")
+        payload = "gpio set %s\r" % self._getgpioindexstr(gpioInput)
+
+        self._command(payload)
 
     def clear(self, gpioInput):
         """Set output status for GPIO input to 0 (low)
@@ -123,26 +116,23 @@ class numato_gpio(object):
             gpioInput: number of the GPIO input (0-15)
         """
 
-        self.command(gpioInput, "clear")
+        payload = "gpio clear %s\r" % self._getgpioindexstr(gpioInput)
 
-    def command(self, gpioInput, command):
+        self._command(payload)
+
+    def _command(self, payload):
         """Run command for GPIO input
         Arguments:
             gpioInput: number of the GPIO input (0-15)
             command: command to write to the GPIO input
         """
 
-        if (int(gpioInput) < 10):
-            gpioIndex = str(gpioInput)
-        else:
-            gpioIndex = chr(55 + int(gpioInput))
-
         self.serPort.reset_input_buffer()
 
-        # Send "gpio xxx" command
-        payload = "gpio %s %s\r" % (command, gpioIndex)
         self.serPort.write(payload.encode())
 
+        # read echoed command to prepare the buffer
+        # for getting the response
         command_echoed = self.serPort.read_until(b'\r')
 
     def close(self):
