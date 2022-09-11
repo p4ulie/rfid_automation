@@ -2,7 +2,7 @@ import serial
 
 class numato_gpio(object):
     """Class for sending and receiving data via Numato GPIO board
-        Documentation: https://numato.com/docs/16-channel-usb-gpio-module-with-analog-inputs/
+    Documentation: https://numato.com/docs/16-channel-usb-gpio-module-with-analog-inputs/
     """
 
     def __init__(self, port, speed, timeout=1):
@@ -44,13 +44,13 @@ class numato_gpio(object):
 
         self._command(payload)
 
-        response = self.serPort.read_until(b'\r')
+        response = self.serPort.read_until(b'\r').decode()
 
         response_value = -1
 
-        if(chr(response[-3]) == "1"):
+        if(response[0] == "1"):
             response_value = 1
-        elif(chr(response[-3]) == "0"):
+        elif(response[0] == "0"):
             response_value = 0
 
         return response_value
@@ -64,9 +64,9 @@ class numato_gpio(object):
 
         self._command(payload)
 
-        response = self.serPort.read_until(b'\r')
+        response = self.serPort.read_until(b'\r').decode()
 
-        response_value = response[-3]
+        response_value = int(response, 16)
 
         return response_value
 
@@ -83,7 +83,7 @@ class numato_gpio(object):
     def iodir(self, gpioInput):
         """Set the direction of all GPIO in single operation
         Arguments:
-            gpioInput: bit encoded set of GPIO directions (1 input, 0 output)
+            gpioInput: bit encoded set of GPIO directions (1 = input, 0 = output)
         """
 
         payload = "gpio iodir %s\r" % str("{0:0{1}x}".format(gpioInput,4))
@@ -93,7 +93,7 @@ class numato_gpio(object):
     def iomask(self, gpioInput):
         """Set mask for selectively update multiple GPIO with writeall/iodir command
         Arguments:
-            gpioInput: bit encoded mask of GPIO directions (1 unmask, 0 mask)
+            gpioInput: bit encoded mask of GPIO directions (1 = unmask, 0 = mask)
         """
 
         payload = "gpio iomask %s\r" % str("{0:0{1}x}".format(gpioInput,4))
