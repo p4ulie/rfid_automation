@@ -100,6 +100,11 @@ def task_update_IO_widgets():
 if __name__ == '__main__':
     numato_gpio = numato_gpio.numato_gpio(PORT_NAME, PORT_SPEED, timeout=1)
 
+    # 1 = unmask, 0 = mask
+    numato_gpio.iomask(int("1111111111111111",2))
+    # 1 = input, 0 = output
+    numato_gpio.iodir(int("1111111111111111",2))
+
     window = tk.Tk()
     app = Application(master=window)
     window.after(200, task_update_IO_widgets)
