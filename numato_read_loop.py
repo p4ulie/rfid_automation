@@ -13,10 +13,12 @@ if __name__ == '__main__':
 
     try:
         while True:
-            print("%s: %s" % (datetime.now(), numato_gpio.read(2)))
+            for i in range(16):
+                print("%s: %d -> %s" % (datetime.now(), i, numato_gpio.read(i)))
+            print()
             print("%s: %s" % (datetime.now(), numato_gpio.readall()))
+            print()
             time.sleep(1)
-            numato_gpio.set(0)
     except KeyboardInterrupt:
         pass
 
