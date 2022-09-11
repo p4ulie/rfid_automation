@@ -55,6 +55,24 @@ class numato_gpio(object):
 
         return response_value
 
+    def readadc(self, gpioInput):
+        """Read value on ADC input
+        Arguments:
+            gpioInput: number of the ADC input (0-6)
+        """
+
+        payload = "adc read %s \r" % self._getgpioindexstr(gpioInput)
+
+        self._command(payload)
+
+        response = self.serPort.read_until(b'\r').decode()
+
+        response_value = -1
+
+        response_value = int(response)
+
+        return response_value
+
     def readall(self):
         """Read all value on GPIO inputs in single operation
         Arguments:
