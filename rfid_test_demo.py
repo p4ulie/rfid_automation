@@ -19,14 +19,15 @@ def loop():
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()
-    config.read('rfid_test_demo.ini')
+    config.read('settings.ini')
 
     numato_gpio = numato_gpio.numato_gpio(
         config['GpioDeviceSettings']['Name'],
         config['GpioDeviceSettings']['Speed'],
         timeout=1)
 
-    rfid_reader = config['RfidReaderDeviceSettings']['Name']
+    rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
+    rfid_reader.grab()
 
     loop()
 
