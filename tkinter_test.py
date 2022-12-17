@@ -1,4 +1,4 @@
-import time
+import datetime, time
 import tkinter as tk
 import tkinter.scrolledtext as tkst
 # import asyncio
@@ -32,8 +32,7 @@ class Application(tk.Frame):
         self.btn_IO_read_enable.pack(side="bottom")
 
         self.IO_text_rfids = tkst.ScrolledText()
-        # self.IO_text_rfids.pack(side="bottom")
-        self.IO_text_rfids.place(x=10, y=115, height=70, width=200)
+        self.IO_text_rfids.place(x=10, y=115, height=70, width=270)
 
     def create_IO_labels(self):
         start_x = 10
@@ -126,7 +125,7 @@ def update_rfid_reader():
 
     while True:
         evdev_output = evdev_readline(rfid_reader)
-        RFID_tag_ID = evdev_output
+        RFID_tag_ID = "%s:\n%s" % (datetime.date.today().strftime('%Y-%m-%d %H:%M:%S'), evdev_output)
 
         time.sleep(0.5)
 
