@@ -32,7 +32,7 @@ class Application(tk.Frame):
         self.btn_IO_read_enable.pack(side="bottom")
 
         self.IO_text_rfids = tkst.ScrolledText()
-        self.IO_text_rfids.place(x=10, y=115, height=70, width=270)
+        self.IO_text_rfids.place(x=10, y=115, height=60, width=290)
 
     def create_IO_labels(self):
         start_x = 10
@@ -91,6 +91,7 @@ class Application(tk.Frame):
         global RFID_tag_ID
 
         if RFID_tag_ID != '':
+            app.IO_text_rfids.delete (1.0, tk.END)
             app.IO_text_rfids.insert(tk.END, RFID_tag_ID+"\n")
             app.IO_text_rfids.see("end")
             RFID_tag_ID = ''
@@ -125,7 +126,7 @@ def update_rfid_reader():
 
     while True:
         evdev_output = evdev_readline(rfid_reader)
-        RFID_tag_ID = "%s:\n%s" % (datetime.date.today().strftime('%Y-%m-%d %H:%M:%S'), evdev_output)
+        RFID_tag_ID = "%s:\n%s" % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), evdev_output)
 
         time.sleep(0.5)
 
