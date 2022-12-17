@@ -26,9 +26,8 @@ class Application(tk.Frame):
 
     def create_widgets(self):
         self.canvas = tk.Canvas(master=window, width=320, height=200)
-        # self.canvas.pack()
 
-        self.btn_IO_read_enable = tk.Button(self, text="Enable", command=self.btn_IO_read_enable)
+        self.btn_IO_read_enable = tk.Button(self, text="Enable", command=self.btn_IO_read_enable, width=20, height=10)
         self.btn_IO_read_enable.pack(side="bottom")
 
         self.IO_text_rfids = tkst.ScrolledText()
