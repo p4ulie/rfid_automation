@@ -7,7 +7,7 @@ import threading
 import numato_gpio
 import configparser
 from evdev import InputDevice, categorize, ecodes
-from evdev_text_wrapper import scancodes, capscodes
+from evdev_text_wrapper import scancodes, capscodes, evdev_readline
 
 IO_count = range(16)
 IO_list = [0 for x in IO_count]
@@ -119,50 +119,16 @@ def task_update_IO_widgets():
     window.after(200, task_update_IO_widgets)  # reschedule event in 2 seconds
 
 def update_rfid_reader():
-    event = ''
-    caps = False
     text = ''
-    key_lookup = None
 
     global RFID_tag_ID
     global thread_run
 
-    counter = 0
+    while True:
+        evdev_output = evdev_readline(rfid_reader)
+        RFID_tag_ID = evdev_output
 
-    while thread_run == True:
-        counter += 1
-    # async for event in rfid_reader.read_loop():
-    #     if event.type == ecodes.EV_KEY:
-    #         data = categorize(event) # Save the event temporarily to introspect it
-    #
-    #         # SHIFT pressed?
-    #         if (data.scancode == 42) or (data.scancode == 54):
-    #             if data.keystate == 1:
-    #                 caps = True
-    #             if data.keystate == 0:
-    #                 caps = False
-    #
-    #         # decode ASCII from key code
-    #         if data.keystate == 1: # Down events only
-    #             if caps:
-    #                 key_lookup = u'{}'.format(capscodes.get(data.scancode)) or u'UNKNOWN:[{}]'.format(data.scancode) # Lookup or return UNKNOWN:XX
-    #             else:
-    #                 key_lookup = u'{}'.format(scancodes.get(data.scancode)) or u'UNKNOWN:[{}]'.format(data.scancode) # Lookup or return UNKNOWN:XX
-    #
-    #         if (data.scancode != 42) and (data.scancode != 28):
-    #             text += key_lookup
-    #
-    #         # pressed enter/crlf key
-    #         if(data.scancode == 28):
-    #             # break
-    #             #
-    #             if text != '':
-    #                 RFID_tag_ID = text
-    #                 print(text)
-    #                 text = ''
-
-        RFID_tag_ID = str(counter)
-        time.sleep(0.1)
+        time.sleep(0.5)
 
 
 if __name__ == '__main__':
@@ -174,8 +140,8 @@ if __name__ == '__main__':
         config['GpioDeviceSettings']['Speed'],
         timeout=1)
 
-    # rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
-    # rfid_reader.grab()
+    rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
+    rfid_reader.grab()
 
     # 1 = unmask, 0 = mask
     numato_gpio.iomask(int("1111111111111111",2))
