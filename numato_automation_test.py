@@ -1,12 +1,15 @@
-import datetime, time
+import datetime
+import time
 import tkinter as tk
 import tkinter.scrolledtext as tkst
 import tkinter.font as font
-import threading
-import numato_gpio
+# import threading
+# import numato_gpio
 import configparser
-from evdev import InputDevice, categorize, ecodes
-from evdev_text_wrapper import scancodes, capscodes, evdev_readline
+
+
+# from evdev import InputDevice, categorize, ecodes
+# from evdev_text_wrapper import scancodes, capscodes, evdev_readline
 
 
 class Application(tk.Frame):
@@ -15,10 +18,7 @@ class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
-        self.create_widgets()
-        self.pack()
 
-    def create_widgets(self):
         self.canvas = tk.Canvas(master=window, width=640, height=200)
 
         self.btn_cycle_start_stop = tk.Button(self,
@@ -28,15 +28,17 @@ class Application(tk.Frame):
                                               font=font.Font(size=14),
                                               fg="white", activeforeground="white",
                                               activebackground="darkgreen", bg="darkgreen"
-        )
-        self.btn_cycle_start_stop.pack(side="left", fill=tk.BOTH, expand = tk.YES)
+                                              )
+        self.btn_cycle_start_stop.pack(side="left", fill=tk.BOTH, expand=tk.YES)
 
         self.IO_text_rfids = tkst.ScrolledText()
-        self.IO_text_rfids.pack(side="right", fill=tk.BOTH, expand = tk.YES)
+        self.IO_text_rfids.pack(side="right", fill=tk.BOTH, expand=tk.YES)
+
+        self.pack()
 
     def btn_cycle_start_stop_handler(self):
-        self.cycle_start_stop = not(self.cycle_start_stop)
-        if self.cycle_start_stop == True:
+        self.cycle_start_stop = not self.cycle_start_stop
+        if self.cycle_start_stop is True:
             self.btn_cycle_start_stop["text"] = "Tap to disable"
             self.btn_cycle_start_stop["activeforeground"] = "black"
             self.btn_cycle_start_stop["fg"] = "black"
@@ -48,6 +50,7 @@ class Application(tk.Frame):
             self.btn_cycle_start_stop["fg"] = "white"
             self.btn_cycle_start_stop["activebackground"] = "darkgreen"
             self.btn_cycle_start_stop["bg"] = "darkgreen"
+
 
 # def update_rfid_reader():
 #     text = ''
@@ -69,27 +72,31 @@ def main_work_loop():
 
         # app.IO_text_rfids.delete (1.0, tk.END)
 
-        conveyorSensor = 1
+        conveyor_sensor = 1
         # conveyorSensor = numato_gpio.read(config['GpioDeviceSettings']['PortConveyorSensor'])
-        if conveyorSensor == 1:
-            app.IO_text_rfids.insert(tk.END, "%s: RFID tag detected\n" % (current_datetime_formatted))
-        else
-            app.IO_text_rfids.insert(tk.END, "%s: RFID tag not detected\n" % (current_datetime_formatted))
+        if conveyor_sensor == 1:
+            app.IO_text_rfids.insert(tk.END, "%s: RFID tag detected\n" % current_datetime_formatted)
+        else:
+            app.IO_text_rfids.insert(tk.END, "%s: RFID tag not detected\n" % current_datetime_formatted)
 
-        app.IO_text_rfids.insert(tk.END, "%s: Enable RFID reader\n" % (current_datetime_formatted))
+        app.IO_text_rfids.insert(tk.END, "%s: Enable RFID reader\n" % current_datetime_formatted)
         # numato_gpio.set(config['GpioDeviceSettings']['PortRfidReaderEnable'])
-        time.sleep(0.2) # wait for RFID reader to initialize
-        app.IO_text_rfids.insert(tk.END, "%s: Read output of RFID reader\n" % (current_datetime_formatted))
-        app.IO_text_rfids.insert(tk.END, "%s: Disable RFID reader\n" % (current_datetime_formatted))
+        time.sleep(0.2)  # wait for RFID reader to initialize
+        app.IO_text_rfids.insert(tk.END, "%s: Read output of RFID reader\n" % current_datetime_formatted)
+        app.IO_text_rfids.insert(tk.END, "%s: Disable RFID reader\n" % current_datetime_formatted)
         # numato_gpio.clear(config['GpioDeviceSettings']['PortRfidReaderEnable'])
 
-        app.IO_text_rfids.insert(tk.END, "%s: Store time, RFID tag id to DB\n" % (current_datetime_formatted))
+        app.IO_text_rfids.insert(tk.END, "%s: Store time, RFID tag id to DB\n" % current_datetime_formatted)
 
-        app.IO_text_rfids.insert(tk.END, "%s: Send signal with RFID reading result to result GPIO port (OK/NOK = 1/0)\n" % (current_datetime_formatted))
+        app.IO_text_rfids.insert(tk.END,
+                                 "%s: Send signal with RFID reading result to result GPIO port (OK/NOK = 1/0)\n"
+                                 % current_datetime_formatted)
         # numato_gpio.set(config['GpioDeviceSettings']['PortRfidResult'])
         # numato_gpio.clear(config['GpioDeviceSettings']['PortRfidResult'])
 
-        app.IO_text_rfids.insert(tk.END, "%s: Send signal to indicate the cycle ended to another GPIO port\n" % (current_datetime_formatted))
+        app.IO_text_rfids.insert(tk.END,
+                                 "%s: Send signal to indicate the cycle ended to another GPIO port\n"
+                                 % current_datetime_formatted)
         # numato_gpio.set(config['GpioDeviceSettings']['PortCycleEnd'])
 
         app.IO_text_rfids.insert(tk.END, "\n")
