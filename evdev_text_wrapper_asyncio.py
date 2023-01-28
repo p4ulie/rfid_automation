@@ -1,3 +1,4 @@
+import asyncio
 from evdev import InputDevice, categorize, ecodes
 
 scancodes = {
@@ -19,12 +20,12 @@ capscodes = {
     50: u'M', 51: u'<', 52: u'>', 53: u'?', 54: u'RSHFT', 56: u'LALT', 57: u' ', 100: u'RALT'
 }
 
-def evdev_readline(device):
+async def evdev_readline(device):
     caps = False
     text = ''
     key_lookup = None
 
-    for event in device.read_loop():
+    async for event in device.async_read_loop():
         if event.type == ecodes.EV_KEY:
             data = categorize(event) # Save the event temporarily to introspect it
 
