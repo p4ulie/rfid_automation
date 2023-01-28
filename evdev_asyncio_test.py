@@ -14,7 +14,7 @@ async def main():
     try:
         result = await asyncio.wait_for(evdev_readline(rfid_reader), 3)
     except asyncio.TimeoutError:
-        print('timeout!')
+        result = 'timeout'
     finally:
         print("After wait, result:", result)
 
@@ -25,6 +25,7 @@ if __name__ == '__main__':
     config.read('settings.ini')
 
     rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
+    rfid_reader_timeout = config['RfidReaderDeviceSettings']['Timeout']
     rfid_reader.grab()
 
     result = asyncio.run(main())

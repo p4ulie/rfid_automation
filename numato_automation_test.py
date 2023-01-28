@@ -1,16 +1,17 @@
+import asyncio
+import configparser
 import datetime
-import time
+
 import tkinter as tk
 import tkinter.scrolledtext as tkst
 import tkinter.font as font
-import threading
-# import numato_gpio
-import configparser
-from evdev import InputDevice, categorize, ecodes
-from evdev_text_wrapper import scancodes, capscodes, evdev_readline
+from async_tkinter_loop import async_handler, async_mainloop
 
-RFID_tag_ID = ''
-thread_run = True
+# import numato_gpio
+
+from evdev import InputDevice, categorize, ecodes
+from evdev_text_wrapper_asyncio import scancodes, capscodes, evdev_readline
+
 
 class Application(tk.Frame):
     cycle_start_stop = False
@@ -51,100 +52,46 @@ class Application(tk.Frame):
             self.btn_cycle_start_stop["activebackground"] = "darkgreen"
             self.btn_cycle_start_stop["bg"] = "darkgreen"
 
+async def read_rfid(device, timeout):
+    result = None
 
-def update_rfid_reader():
-    text = ''
+    print("Reading RFID device")
 
-    global RFID_tag_ID
-    global thread_run
+    try:
+        result = await asyncio.wait_for(evdev_readline(device), timeout)
+    except asyncio.TimeoutError:
+        result = 'timeout'
+    finally:
+        print("Debug - result:", result)
 
+    return result
+
+async def main_work_loop():
     while True:
-        if not thread_run:
-            break
 
-        print("Executing thread loop...")
+        if app.cycle_start_stop:
+            # print("Worker invoked - app cycle is started")
 
-        evdev_output = evdev_readline(rfid_reader)
-        RFID_tag_ID = "%s:\n%s" % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), evdev_output)
+            current_datetime = datetime.datetime.now()
+            current_datetime_formatted = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
 
-        time.sleep(0.5)
+            # app.IO_text_rfids.delete (1.0, tk.END)
 
-    print("Exiting thread loop...")
+            conveyor_sensor = 1
+            # conveyorSensor = numato_gpio.read(config['GpioDeviceSettings']['PortConveyorSensor'])
+            if conveyor_sensor == 1:
+                app.IO_text_rfids.insert(tk.END, "%s: RFID tag detected\n" % current_datetime_formatted)
 
-class RFID_reader_thread(threading.Thread):
+                app.IO_text_rfids.insert(tk.END, "%s: Read output of RFID reader\n" % current_datetime_formatted)
 
-    def __init__(self, name='RfidReaderThread'):
-        """ constructor, setting initial variables """
-        self._stopevent = threading.Event(  )
-        self._sleepperiod = 0.5
-        self.RFID_tag_ID = ''
+                RFID_tag_ID = await read_rfid(rfid_reader, rfid_reader_timeout)
+                app.IO_text_rfids.insert(tk.END, "%s: RFID tag: %s\n" % (current_datetime_formatted, RFID_tag_ID))
 
-        threading.Thread.__init__(self, name=name)
+                app.IO_text_rfids.insert(tk.END, "\n")
+            else:
+                app.IO_text_rfids.insert(tk.END, "%s: RFID tag not detected\n" % current_datetime_formatted)
 
-    def run(self):
-        """ main control loop """
-        # print "%s starts" % (self.getName(  ),)
-
-        count = 0
-        while not self._stopevent.isSet(  ):
-            evdev_output = evdev_readline(rfid_reader)
-            self.RFID_tag_ID = "%s:\n%s" % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), evdev_output)
-            self._stopevent.wait(self._sleepperiod)
-
-        # print "%s ends" % (self.getName(  ),)
-
-    def join(self, timeout=None):
-        """ Stop the thread. """
-        self._stopevent.set(  )
-        threading.Thread.join(self, timeout)
-
-
-def main_work_loop():
-    global RFID_tag_ID
-
-    if app.cycle_start_stop:
-        current_datetime = datetime.datetime.now()
-        current_datetime_formatted = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
-
-        # app.IO_text_rfids.delete (1.0, tk.END)
-
-        conveyor_sensor = 1
-        # conveyorSensor = numato_gpio.read(config['GpioDeviceSettings']['PortConveyorSensor'])
-        if conveyor_sensor == 1:
-            app.IO_text_rfids.insert(tk.END, "%s: RFID tag detected\n" % current_datetime_formatted)
-        else:
-            app.IO_text_rfids.insert(tk.END, "%s: RFID tag not detected\n" % current_datetime_formatted)
-
-        app.IO_text_rfids.insert(tk.END, "%s: Enable RFID reader\n" % current_datetime_formatted)
-        # numato_gpio.set(config['GpioDeviceSettings']['PortRfidReaderEnable'])
-        time.sleep(0.2)  # wait for RFID reader to initialize
-        app.IO_text_rfids.insert(tk.END, "%s: Read output of RFID reader\n" % current_datetime_formatted)
-
-        # evdev_output = evdev_readline(rfid_reader)
-        # RFID_tag_ID = "%s:\n%s" % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), evdev_output)
-        app.IO_text_rfids.insert(tk.END, "%s: RFID tag: %s\n" % (current_datetime_formatted, RFID_tag_ID))
-        RFID_tag_ID = ''
-
-        app.IO_text_rfids.insert(tk.END, "%s: Disable RFID reader\n" % current_datetime_formatted)
-        # numato_gpio.clear(config['GpioDeviceSettings']['PortRfidReaderEnable'])
-
-        app.IO_text_rfids.insert(tk.END, "%s: Store time, RFID tag id to DB\n" % current_datetime_formatted)
-
-        app.IO_text_rfids.insert(tk.END,
-                                 "%s: Send signal with RFID reading result to result GPIO port (OK/NOK = 1/0)\n"
-                                 % current_datetime_formatted)
-        # numato_gpio.set(config['GpioDeviceSettings']['PortRfidResult'])
-        # numato_gpio.clear(config['GpioDeviceSettings']['PortRfidResult'])
-
-        app.IO_text_rfids.insert(tk.END,
-                                 "%s: Send signal to indicate the cycle ended to another GPIO port\n"
-                                 % current_datetime_formatted)
-        # numato_gpio.set(config['GpioDeviceSettings']['PortCycleEnd'])
-
-        app.IO_text_rfids.insert(tk.END, "\n")
-        app.IO_text_rfids.see("end")
-
-    window.after(1000, main_work_loop)
+        await asyncio.sleep(1)
 
 
 if __name__ == '__main__':
@@ -157,6 +104,7 @@ if __name__ == '__main__':
     #     timeout=1)
     #
     rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
+    rfid_reader_timeout = int(config['RfidReaderDeviceSettings']['Timeout'])
     rfid_reader.grab()
     #
     # # 1 = unmask, 0 = mask
@@ -166,31 +114,11 @@ if __name__ == '__main__':
     #
     window = tk.Tk()
 
-    t = threading.Thread(target=update_rfid_reader)
-    # threading_event = threading.Event()
-    # rfid_reader_thread = RFID_reader_thread()
-    # rfid_reader_thread.start()
-
-    def on_closing():
-        # if messagebox.askokcancel("Quit", "Do you want to quit?"):
-        #     t.join()
-            # threading_event.set()
-        thread_run = False
-        # rfid_reader_thread.join()
-        time.sleep(1)
-        print("Closing window...")
-        window.destroy()
-
-    window.protocol("WM_DELETE_WINDOW", on_closing)
-
     app = Application(master=window)
 
     window.minsize(width=1000, height=250)
     # window.geometry("250x250")
 
-    window.after(200, main_work_loop)
+    asyncio.get_event_loop_policy().get_event_loop().create_task(main_work_loop())
 
-    t = threading.Thread(target=update_rfid_reader)
-    t.start()
-
-    app.mainloop()
+    async_mainloop(window)

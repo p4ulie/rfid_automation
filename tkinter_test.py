@@ -1,13 +1,13 @@
 import datetime, time
 import tkinter as tk
 import tkinter.scrolledtext as tkst
-# import asyncio
-import threading
-# from async_tkinter_loop import async_handler, async_mainloop
+import asyncio
+# import threading
+from async_tkinter_loop import async_handler, async_mainloop
 import numato_gpio
 import configparser
 from evdev import InputDevice, categorize, ecodes
-from evdev_text_wrapper import scancodes, capscodes, evdev_readline
+from evdev_text_wrapper_asyncio import scancodes, capscodes, evdev_readline
 
 IO_count = range(16)
 IO_list = [0 for x in IO_count]
@@ -115,20 +115,38 @@ def task_update_IO_widgets():
 
     app.update_IO_widgets()
 
+    # RFID_tag_ID = await read_rfid(rfid_reader, rfid_reader_timeout)
+
     window.after(200, task_update_IO_widgets)  # reschedule event in 2 seconds
 
-def update_rfid_reader():
-    text = ''
+async def read_rfid(device, timeout):
+    result = None
 
-    global RFID_tag_ID
-    global thread_run
+    try:
+        result = await asyncio.wait_for(evdev_readline(device), timeout)
+    except asyncio.TimeoutError:
+        result = 'timeout'
+    finally:
+        print("Debug - result:", result)
 
+    return result
+
+# def update_rfid_reader():
+#     text = ''
+#
+#     global RFID_tag_ID
+#     global thread_run
+#
+#     while True:
+#         evdev_output = evdev_readline(rfid_reader)
+#         RFID_tag_ID = "%s:\n%s" % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), evdev_output)
+#
+#         time.sleep(0.5)
+
+async def worker():
     while True:
-        evdev_output = evdev_readline(rfid_reader)
-        RFID_tag_ID = "%s:\n%s" % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), evdev_output)
-
-        time.sleep(0.5)
-
+        print("Worker invoked")
+        await asyncio.sleep(1)
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()
@@ -137,9 +155,11 @@ if __name__ == '__main__':
     numato_gpio = numato_gpio.numato_gpio(
         com_port=config['GpioDeviceSettings']['Name'],
         com_speed=config['GpioDeviceSettings']['Speed'],
-        com_timeout=1)
+        com_timeout=1
+    )
 
     rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
+    rfid_reader_timeout = config['RfidReaderDeviceSettings']['Timeout']
     rfid_reader.grab()
 
     # 1 = unmask, 0 = mask
@@ -148,13 +168,19 @@ if __name__ == '__main__':
     numato_gpio.iodirall(int("1111111111111111",2))
 
     window = tk.Tk()
+
     app = Application(master=window)
+
     window.after(200, task_update_IO_widgets)
 
-    t = threading.Thread(target=update_rfid_reader)
-    t.start()
+    # t = threading.Thread(target=update_rfid_reader)
+    # t.start()
 
-    app.mainloop()
+    # app.mainloop()
+
+    asyncio.get_event_loop_policy().get_event_loop().create_task(worker())
+
+    async_mainloop(window)
 
     thread_run = False
 
