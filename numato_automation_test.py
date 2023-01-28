@@ -55,14 +55,10 @@ class Application(tk.Frame):
 async def read_rfid(device, timeout):
     result = None
 
-    print("Reading RFID device")
-
     try:
         result = await asyncio.wait_for(evdev_readline(device), int(timeout))
     except asyncio.TimeoutError:
         result = 'timeout'
-    finally:
-        print("Debug - result:", result)
 
     return result
 
@@ -71,6 +67,8 @@ async def main_work_loop():
 
         if app.cycle_start_stop:
             # print("Worker invoked - app cycle is started")
+            clean_buffer = await read_rfid(rfid_reader, 0.5)
+            print("Clean buffer: %s" % clean_buffer)
 
             current_datetime = datetime.datetime.now()
             current_datetime_formatted = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
@@ -91,7 +89,9 @@ async def main_work_loop():
             else:
                 app.IO_text_rfids.insert(tk.END, "%s: RFID tag not detected\n" % current_datetime_formatted)
 
-        await asyncio.sleep(1)
+            app.IO_text_rfids.see("end")
+
+        await asyncio.sleep(0.1)
 
 
 if __name__ == '__main__':
