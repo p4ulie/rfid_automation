@@ -5,6 +5,8 @@ class numato_gpio(object):
     Documentation: https://numato.com/docs/16-channel-usb-gpio-module-with-analog-inputs/
     """
 
+    IN = 1
+    OUT = 0
 
     def __init__(self, com_port, com_speed, com_timeout=1, gpio_ports=16):
         """Open serial port at specified baud speed
@@ -122,13 +124,23 @@ class numato_gpio(object):
 
         self._command(payload)
 
-    def iomask(self, gpioInput):
-        """Set mask for selectively update multiple GPIO with writeall/iodir command
+    def iodir(self, gpio_port, direction):
+        """Set the direction of specific GPIO port
         Arguments:
-            gpioInput: bit encoded mask of GPIO directions (1 = unmask, 0 = mask)
+            gpio_port: number of the GPIO port (0-15)
+            direction: (1 = input, 0 = output)
         """
 
-        payload = "gpio iomask %s\r" % str("{0:0{1}x}".format(gpioInput,4))
+        # convert number to binary format string and remove leading "0b" from string
+        # bit_iomask = bin(gpio_port).replace("0b", "").zfill(self.gpio_ports)
+        bit_iomask = 2 ** gpio_port
+        if direction == self.IN:
+            bit_iodir = bit_iomask
+        else:
+            bit_iodir = 0
+
+        self.iomask(bit_iomask)
+        self.iodirall(bit_iodir)
 
     def set(self, gpio_port):
         """Set output status for GPIO port to 1 (high)
