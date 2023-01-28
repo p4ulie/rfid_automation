@@ -58,7 +58,7 @@ async def read_rfid(device, timeout):
     print("Reading RFID device")
 
     try:
-        result = await asyncio.wait_for(evdev_readline(device), timeout)
+        result = await asyncio.wait_for(evdev_readline(device), int(timeout))
     except asyncio.TimeoutError:
         result = 'timeout'
     finally:
