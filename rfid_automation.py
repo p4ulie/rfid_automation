@@ -14,6 +14,10 @@ from evdev_text_wrapper_asyncio import scancodes, capscodes, evdev_readline
 
 
 class Application(tk.Frame):
+    """
+    Define application window and widget parameters,
+    widget handlers
+    """
     cycle_start_stop = False
 
     def __init__(self, master=None):
@@ -24,7 +28,7 @@ class Application(tk.Frame):
 
         self.btn_cycle_start_stop = tk.Button(self,
                                               text="Tap to enable",
-                                              command=self.btn_cycle_start_stop_handler,
+                                              command=async_handler(self.btn_cycle_start_stop_handler),
                                               width=20, height=10,
                                               font=font.Font(size=14),
                                               fg="white", activeforeground="white",
@@ -32,12 +36,12 @@ class Application(tk.Frame):
                                               )
         self.btn_cycle_start_stop.pack(side="left", fill=tk.BOTH, expand=tk.YES)
 
-        self.IO_text_rfids = tkst.ScrolledText()
-        self.IO_text_rfids.pack(side="right", fill=tk.BOTH, expand=tk.YES)
+        self.IO_text = tkst.ScrolledText()
+        self.IO_text.pack(side="right", fill=tk.BOTH, expand=tk.YES)
 
         self.pack()
 
-    def btn_cycle_start_stop_handler(self):
+    async def btn_cycle_start_stop_handler(self):
         self.cycle_start_stop = not self.cycle_start_stop
         if self.cycle_start_stop is True:
             self.btn_cycle_start_stop["text"] = "Tap to disable"
@@ -73,23 +77,25 @@ async def main_work_loop():
             current_datetime = datetime.datetime.now()
             current_datetime_formatted = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
 
-            # app.IO_text_rfids.delete (1.0, tk.END)
+            # app.IO_text.delete (1.0, tk.END)
 
             conveyor_sensor = 1
             # conveyorSensor = numato_gpio.read(config['GpioDeviceSettings']['PortConveyorSensor'])
             if conveyor_sensor == 1:
-                app.IO_text_rfids.insert(tk.END, "%s: RFID tag detected\n" % current_datetime_formatted)
+                app.IO_text.insert(tk.END, "%s: RFID tag detected\n" % current_datetime_formatted)
 
-                app.IO_text_rfids.insert(tk.END, "%s: Read output of RFID reader\n" % current_datetime_formatted)
+                app.IO_text.insert(tk.END, "%s: Read output of RFID reader\n" % current_datetime_formatted)
 
-                RFID_tag_ID = await read_rfid(rfid_reader, rfid_reader_timeout)
-                app.IO_text_rfids.insert(tk.END, "%s: RFID tag: %s\n" % (current_datetime_formatted, RFID_tag_ID))
+                app.IO_text.see("end")
 
-                app.IO_text_rfids.insert(tk.END, "\n")
+                rfid_tag_id = await read_rfid(rfid_reader, rfid_reader_timeout)
+                app.IO_text.insert(tk.END, "%s: RFID tag: %s\n" % (current_datetime_formatted, rfid_tag_id))
+
+                app.IO_text.insert(tk.END, "\n")
             else:
-                app.IO_text_rfids.insert(tk.END, "%s: RFID tag not detected\n" % current_datetime_formatted)
+                app.IO_text.insert(tk.END, "%s: RFID tag not detected\n" % current_datetime_formatted)
 
-            app.IO_text_rfids.see("end")
+            app.IO_text.see("end")
 
         await asyncio.sleep(0.1)
 
@@ -117,7 +123,6 @@ if __name__ == '__main__':
     app = Application(master=window)
 
     window.minsize(width=1000, height=250)
-    # window.geometry("250x250")
 
     asyncio.get_event_loop_policy().get_event_loop().create_task(main_work_loop())
 
