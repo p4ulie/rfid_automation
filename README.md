@@ -1,11 +1,14 @@
 # Loop example:
 
-        if conveyor_sensor == 0:
-            print("RFID tag detected")
-            print("Enable RFID reader")
-            time.sleep(0.2) # wait for RFID reader to initialize
-            print("Read output of RFID reader")
-            print("Disable RFID reader")
-            print("Store time, RFID tag id to DB")
-            print("Send signal with RFID reading result to result GPIO port (OK/NOK = 1/0)")
-            print("Send signal to indicate the cycle ended to another GPIO port")
+        if conveyor_sensor GPIO port 0 == 1:
+            "Set 0 to GPIO port 5"
+            "Set 0 to GPIO port 6"
+
+            result = "Read output of RFID reader (timeout?)"
+
+            print("Store time, RFID tag (even not sucessfull read with null) id to DB")
+
+            if result:
+                OK  = print("Set 1 to GPIO port 5")
+                NOK = print("Set 1 to GPIO port 6")
+
