@@ -5,17 +5,22 @@ class numato_gpio(object):
     Documentation: https://numato.com/docs/16-channel-usb-gpio-module-with-analog-inputs/
     """
 
-    def __init__(self, port, speed, timeout=1):
+
+    def __init__(self, com_port, com_speed, com_timeout=1, gpio_ports=16):
         """Open serial port at specified baud speed
         Arguments:
-            port: serial port
-            speed: baud speed
-            timeout: timeout flag (default enabled)
+            gpio_ports: number of ports on GPIO board
+            com_port: serial port number
+            com_speed: baud speed
+            com_timeout: timeout flag (default enabled)
         """
 
-        self.port = port
-        self.speed = speed
-        self.timeout = timeout
+        self.ports = gpio_ports
+        self._MASK_ALL_PORTS = 2 ** self.ports - 1
+
+        self.port = com_port
+        self.speed = com_speed
+        self.timeout = com_timeout
 
         #Open port for communication
         self.serPort = serial.Serial(self.port, self.speed, timeout=self.timeout)
@@ -98,11 +103,27 @@ class numato_gpio(object):
 
         self._command(payload)
 
-    def iodir(self, gpioInput):
+    def iodirall(self, gpioInput):
         """Set the direction of all GPIO in single operation
         Arguments:
             gpioInput: bit encoded set of GPIO directions (1 = input, 0 = output)
         """
+
+        payload = "gpio iodir %s\r" % str("{0:0{1}x}".format(gpioInput,4))
+
+        self._command(payload)
+
+    def iodir(self, gpioInput, direction):
+        """Set the direction of specific GPIO port
+        Arguments:
+            gpioInput: number of the GPIO input (0-15)
+            direction: (1 = input, 0 = output)
+        """
+
+       # new_iodir = (self._iodir & ((1 << port) ^ self._MASK_ALL_PORTS)) | (
+       #      (0 if not direction else 1) << port
+       #  )
+       #  self.iodir = new_iodir
 
         payload = "gpio iodir %s\r" % str("{0:0{1}x}".format(gpioInput,4))
 
