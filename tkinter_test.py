@@ -135,9 +135,9 @@ if __name__ == '__main__':
     config.read('settings.ini')
 
     numato_gpio = numato_gpio.numato_gpio(
-        config['GpioDeviceSettings']['Name'],
-        config['GpioDeviceSettings']['Speed'],
-        timeout=1)
+        com_port=config['GpioDeviceSettings']['Name'],
+        com_speed=config['GpioDeviceSettings']['Speed'],
+        com_timeout=1)
 
     rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
     rfid_reader.grab()
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     # 1 = unmask, 0 = mask
     numato_gpio.iomask(int("1111111111111111",2))
     # 1 = input, 0 = output
-    numato_gpio.iodir(int("1111111111111111",2))
+    numato_gpio.iodirall(int("1111111111111111",2))
 
     window = tk.Tk()
     app = Application(master=window)
