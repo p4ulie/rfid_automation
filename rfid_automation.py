@@ -68,7 +68,6 @@ async def read_rfid(device, timeout):
     return result
 
 def db_log_entry(date, id):
-    print("Logged in DB")
     db_connection.execute('INSERT INTO rfid values (?, ?)', (date, id) )
     db_connection.commit()
 
@@ -103,11 +102,13 @@ async def main_work_loop():
                 db_log_entry(datetime.now(timezone.utc), rfid_tag_id)
 
                 if rfid_tag_id != "timeout":
-                    app.IO_text.insert(tk.END, "%s: RFID tag: %s\n" % (current_datetime_formatted, rfid_tag_id))
+                    port_result_ok = config['GpioDeviceSettings']['PortResultOK']
+                    app.IO_text.insert(tk.END, "%s: RFID tag: %s, setting port %s\n" % (current_datetime_formatted, rfid_tag_id, port_result_ok))
+                    numato_gpio.set(port_result_ok)
                 else:
-                    app.IO_text.insert(tk.END, "%s: RFID tag not detected\n" % current_datetime_formatted)
-
-            # else:
+                    port_result_nok = config['GpioDeviceSettings']['PortResultNOK']
+                    app.IO_text.insert(tk.END, "%s: RFID tag not detected, setting port %s\n" % (current_datetime_formatted, port_result_nok))
+                    numato_gpio.set(port_result_nok)
 
             app.IO_text.insert(tk.END, "\n")
             # move the scrolledtext widget position to end
@@ -123,7 +124,6 @@ if __name__ == '__main__':
     db_file = config['Database_Sqlite']['File']
     print("Open database connection:", db_file)
     db_connection = sqlite3.connect(db_file)
-    # db_cursor = db_connection.cursor()
     db_connection.execute("""CREATE TABLE IF NOT EXISTS rfid(
                               date text PRIMARY KEY,
                               id varchar(15) NOT NULL)"""
@@ -132,17 +132,17 @@ if __name__ == '__main__':
     numato_gpio = numato_gpio.numato_gpio(
         config['GpioDeviceSettings']['Name'],
         config['GpioDeviceSettings']['Speed'],
-        com_timeout=1)
+        com_timeout=1
+    )
 
     # initialize the RFID reader and grab the device so system won't catch events
     rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
     rfid_reader_timeout = int(config['RfidReaderDeviceSettings']['Timeout'])
     rfid_reader.grab()
 
-    # 1 = unmask, 0 = mask
-    numato_gpio.iomask(int("0000000001100001",2))
-    # 1 = input, 0 = output
-    numato_gpio.iodirall(int("0000000000000001",2))
+    # set port 0 to input, ports 5,6 to output
+    numato_gpio.iomask(int("0000000001100001",2))   # 1 = unmask, 0 = mask
+    numato_gpio.iodirall(int("0000000000000001",2))   # 1 = input, 0 = output
 
     window = tk.Tk()
     app = Application(master=window)
