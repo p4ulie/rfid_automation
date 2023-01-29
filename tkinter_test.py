@@ -1,3 +1,5 @@
+#!python3
+
 import datetime, time
 import tkinter as tk
 import tkinter.scrolledtext as tkst

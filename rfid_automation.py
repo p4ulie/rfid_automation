@@ -1,3 +1,5 @@
+#!python3
+
 import asyncio
 import configparser
 from datetime import datetime, timezone
