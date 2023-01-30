@@ -74,6 +74,10 @@ def db_log_entry(date, id):
     db_connection.commit()
 
 async def main_work_loop():
+
+    port_result_ok = config['GpioDeviceSettings']['PortResultOK']
+    port_result_nok = config['GpioDeviceSettings']['PortResultNOK']
+
     while True:
         if app.cycle_start_stop:
             current_datetime = datetime.now()
@@ -82,7 +86,7 @@ async def main_work_loop():
             # read the value to "clean the buffer"
             clean_buffer = await read_rfid(rfid_reader, 0.5)
 
-            conveyor_sensor_port = numato_gpio.read(config['GpioDeviceSettings']['PortConveyorSensor'])
+            conveyor_sensor_port = config['GpioDeviceSettings']['PortConveyorSensor']
             conveyor_sensor = numato_gpio.read(conveyor_sensor_port)
             # conveyor_sensor = 1
 
@@ -90,6 +94,9 @@ async def main_work_loop():
 
             if conveyor_sensor == 1:
                 # app.IO_text.delete (1.0, tk.END)
+
+                numato_gpio.clear(port_result_ok)
+                numato_gpio.clear(port_result_nok)
 
                 app.IO_text.insert(tk.END, "%s: RFID tag detected\n" % current_datetime_formatted)
                 app.IO_text.insert(tk.END, "%s: Read output of RFID reader\n" % current_datetime_formatted)
@@ -104,11 +111,9 @@ async def main_work_loop():
                 db_log_entry(datetime.now(timezone.utc), rfid_tag_id)
 
                 if rfid_tag_id != "timeout":
-                    port_result_ok = config['GpioDeviceSettings']['PortResultOK']
                     app.IO_text.insert(tk.END, "%s: RFID tag: %s, setting port %s\n" % (current_datetime_formatted, rfid_tag_id, port_result_ok))
                     numato_gpio.set(port_result_ok)
                 else:
-                    port_result_nok = config['GpioDeviceSettings']['PortResultNOK']
                     app.IO_text.insert(tk.END, "%s: RFID tag not detected, setting port %s\n" % (current_datetime_formatted, port_result_nok))
                     numato_gpio.set(port_result_nok)
 
