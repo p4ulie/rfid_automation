@@ -16,6 +16,8 @@ from evdev_text_wrapper_asyncio import scancodes, capscodes, evdev_readline
 
 import sqlite3
 
+rfid_tag_id = "empty"
+
 class Application(tk.Frame):
     """
     Define application window and widget parameters,
@@ -81,32 +83,26 @@ async def btn_send_ok_handler():
 async def btn_send_nok_handler():
     numato_gpio.set(port_result_nok)
 
-async def read_rfid(device, timeout):
-    result = None
-
-    try:
-        result = await asyncio.wait_for(evdev_readline(device), int(timeout))
-    except asyncio.TimeoutError:
-        result = 'timeout'
-
-    return result
-
 def db_log_entry(date, id):
     db_connection.execute('INSERT INTO rfid values (?, ?)', (date, id) )
     db_connection.commit()
 
+async def rfid_reader_loop():
+    global rfid_tag_id
+    while True:
+        # read the RFID tag's ID
+        rfid_tag_id = await evdev_readline(rfid_reader)
+
 async def main_work_loop():
-
-    port_result_ok = config['GpioDeviceSettings']['PortResultOK']
-    port_result_nok = config['GpioDeviceSettings']['PortResultNOK']
-
+    global rfid_tag_id
     while True:
         if app.cycle_start_stop:
+
+            # clear the scrolled text widget
+            # app.IO_text.delete (1.0, tk.END)
+
             current_datetime = datetime.now()
             current_datetime_formatted = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
-
-            # read the value to "clean the buffer"
-            # clean_buffer = await read_rfid(rfid_reader, 0.5)
 
             conveyor_sensor_port = config['GpioDeviceSettings']['PortConveyorSensor']
             conveyor_sensor = numato_gpio.read(conveyor_sensor_port)
@@ -115,29 +111,25 @@ async def main_work_loop():
             app.IO_text.insert(tk.END, "%s: Conveyor sensor value: %s\n" % (current_datetime_formatted, conveyor_sensor))
 
             if conveyor_sensor == 1:
-                # app.IO_text.delete (1.0, tk.END)
 
                 numato_gpio.clear(port_result_ok)
                 numato_gpio.clear(port_result_nok)
 
                 app.IO_text.insert(tk.END, "%s: RFID tag detected\n" % current_datetime_formatted)
-                app.IO_text.insert(tk.END, "%s: Read output of RFID reader\n" % current_datetime_formatted)
 
                 # move the scrolledtext widget position to end
                 app.IO_text.see("end")
 
-                # read the RFID tag's ID
-                rfid_tag_id = await read_rfid(rfid_reader, rfid_reader_timeout)
-                # rfid_tag_id = "999000000020044"
-
-                db_log_entry(datetime.now(timezone.utc), rfid_tag_id)
-
-                if rfid_tag_id != "timeout":
+                if rfid_tag_id != "empty":
                     app.IO_text.insert(tk.END, "%s: RFID tag: %s, setting port %s\n" % (current_datetime_formatted, rfid_tag_id, port_result_ok))
                     numato_gpio.set(port_result_ok)
                 else:
                     app.IO_text.insert(tk.END, "%s: RFID tag not detected, setting port %s\n" % (current_datetime_formatted, port_result_nok))
                     numato_gpio.set(port_result_nok)
+
+                db_log_entry(datetime.now(timezone.utc), rfid_tag_id)
+
+                rfid_tag_id = "empty"
 
             app.IO_text.insert(tk.END, "\n")
             # move the scrolledtext widget position to end
@@ -179,6 +171,9 @@ if __name__ == '__main__':
     window = tk.Tk()
     app = Application(master=window)
     window.minsize(width=1000, height=250)
+
+    # start RFID reader loop
+    asyncio.get_event_loop_policy().get_event_loop().create_task(rfid_reader_loop())
 
     # start main work loop
     asyncio.get_event_loop_policy().get_event_loop().create_task(main_work_loop())
