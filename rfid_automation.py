@@ -84,7 +84,7 @@ async def main_work_loop():
             current_datetime_formatted = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
 
             # read the value to "clean the buffer"
-            clean_buffer = await read_rfid(rfid_reader, 0.5)
+            # clean_buffer = await read_rfid(rfid_reader, 0.5)
 
             conveyor_sensor_port = config['GpioDeviceSettings']['PortConveyorSensor']
             conveyor_sensor = numato_gpio.read(conveyor_sensor_port)
