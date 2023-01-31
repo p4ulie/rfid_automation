@@ -30,14 +30,30 @@ class Application(tk.Frame):
         self.canvas = tk.Canvas(master=window, width=640, height=200)
 
         self.btn_cycle_start_stop = tk.Button(self,
-                                              text="Tap to enable",
+                                              text="Tap\nto\nenable",
                                               command=async_handler(self.btn_cycle_start_stop_handler),
                                               width=10, height=5,
                                               font=font.Font(size=14),
                                               fg="white", activeforeground="white",
                                               activebackground="darkgreen", bg="darkgreen"
                                               )
-        self.btn_cycle_start_stop.pack(side="left", fill=tk.BOTH, expand=tk.YES)
+        self.btn_cycle_start_stop.pack(side="top", fill=tk.BOTH, expand=tk.NO)
+
+        self.btn_send_OK = tk.Button(self,
+                                      text="Send\nOK\nsignal",
+                                      command=async_handler(btn_send_ok_handler),
+                                      width=10, height=5,
+                                      font=font.Font(size=14)
+                                      )
+        self.btn_send_OK.pack(side="top", fill=tk.BOTH, expand=tk.NO)
+
+        self.btn_send_NOK = tk.Button(self,
+                                      text="Send\nNOK\nsignal",
+                                      command=async_handler(btn_send_nok_handler),
+                                      width=10, height=5,
+                                      font=font.Font(size=14)
+                                      )
+        self.btn_send_NOK.pack(side="top", fill=tk.BOTH, expand=tk.NO)
 
         self.IO_text = tkst.ScrolledText()
         self.IO_text.pack(side="right", fill=tk.BOTH, expand=tk.YES)
@@ -58,6 +74,12 @@ class Application(tk.Frame):
             self.btn_cycle_start_stop["fg"] = "white"
             self.btn_cycle_start_stop["activebackground"] = "darkgreen"
             self.btn_cycle_start_stop["bg"] = "darkgreen"
+
+async def btn_send_ok_handler():
+    numato_gpio.set(port_result_ok)
+
+async def btn_send_nok_handler():
+    numato_gpio.set(port_result_nok)
 
 async def read_rfid(device, timeout):
     result = None
@@ -137,8 +159,8 @@ if __name__ == '__main__':
                           )
 
     numato_gpio = numato_gpio.numato_gpio(
-        config['GpioDeviceSettings']['Name'],
-        config['GpioDeviceSettings']['Speed'],
+        com_port=config['GpioDeviceSettings']['Name'],
+        com_speed=config['GpioDeviceSettings']['Speed'],
         com_timeout=1
     )
 
@@ -150,6 +172,9 @@ if __name__ == '__main__':
     # set port 0 to input, ports 5,6 to output
     numato_gpio.iomask(int("0000000001100001",2))   # 1 = unmask, 0 = mask
     numato_gpio.iodirall(int("0000000000000001",2))   # 1 = input, 0 = output
+
+    port_result_ok = config['GpioDeviceSettings']['PortResultOK']
+    port_result_nok = config['GpioDeviceSettings']['PortResultNOK']
 
     window = tk.Tk()
     app = Application(master=window)
