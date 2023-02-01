@@ -239,7 +239,7 @@ async def main_work_loop():
             # move the scrolledtext widget position to end
             app.IO_text.see("end")
 
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(float(config['Application']['MainLoopWait']))
 
 
 if __name__ == '__main__':
