@@ -191,6 +191,7 @@ def log_entry(date, id):
             quoting=csv.QUOTE_MINIMAL
         )
         csv_writer.writerow([date, id])
+        csv_writer.close()
 
 async def rfid_reader_loop():
     global rfid_tag_id
