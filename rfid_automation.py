@@ -174,7 +174,7 @@ def db_log_entry(date, id):
 
 async def rfid_reader_loop():
     global rfid_tag_id
-    while True:
+    while True and (config['RfidReaderDeviceSettings']['Enabled'] == "True"):
         rfid_tag_id = await evdev_readline(rfid_reader)
 
 async def main_work_loop():
@@ -283,10 +283,13 @@ if __name__ == '__main__':
     )
 
     # initialize the RFID reader and grab the device so system won't catch events
-    rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
-    rfid_reader_timeout = int(config['RfidReaderDeviceSettings']['Timeout'])
-    rfid_reader.grab()
-    logger.debug("RFID reader %s opened" % config['RfidReaderDeviceSettings']['Name'])
+    if config['RfidReaderDeviceSettings']['Enabled'] == "True":
+        rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
+        rfid_reader_timeout = int(config['RfidReaderDeviceSettings']['Timeout'])
+        rfid_reader.grab()
+        logger.debug("RFID reader %s opened" % config['RfidReaderDeviceSettings']['Name'])
+    else:
+        logger.debug("RFID reader disabled")
 
     logger.debug("Setting IO mask and direction")
     # set port 0 to input, ports 5,6 to output
