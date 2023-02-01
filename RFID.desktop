@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=RFID
+Comment=
+Exec=/home/paulie/Development/numato_python_test/rfid_automation.py
+Icon=/home/paulie/Development/numato_python_test/rfid.png
+Path=/home/paulie/Development/numato_python_test
+Terminal=false
+StartupNotify=false
+GenericName=RFID automation application
