@@ -191,6 +191,10 @@ async def main_work_loop():
         if app is not None:
             app.draw_led_lights(gpio_states)
 
+        logger.debug("Clearing OK/NOK port state")
+        numato_gpio.clear(port_result_ok)
+        numato_gpio.clear(port_result_nok)
+
         if app.cycle_start_stop:
 
             logger.debug("Start new worker cycle")
@@ -206,18 +210,15 @@ async def main_work_loop():
             # conveyor_sensor = numato_gpio.read(conveyor_sensor_port)
             conveyor_sensor = gpio_states[conveyor_sensor_port]
 
-            app.IO_text.insert(tk.END, "%s: Conveyor sensor value: %s\n" % (current_datetime_formatted, conveyor_sensor))
+            # app.IO_text.insert(tk.END, "%s: Conveyor sensor value: %s\n" % (current_datetime_formatted, conveyor_sensor))
 
             if conveyor_sensor == 1:
                 logger.debug("Conveyor sensor triggered")
 
-                logger.debug("Clearing OK/NOK port state")
-                numato_gpio.clear(port_result_ok)
-                numato_gpio.clear(port_result_nok)
 
                 app.IO_text.insert(tk.END, "%s: RFID tag detected\n" % current_datetime_formatted)
 
-                # move the scrolledtext widget position to end
+                # # move the scrolledtext widget position to end
                 app.IO_text.see("end")
 
                 logger.debug("Last RFID value detected: %s" % rfid_tag_id)
@@ -234,7 +235,7 @@ async def main_work_loop():
 
                 rfid_tag_id = "empty"
 
-            app.IO_text.insert(tk.END, "\n")
+            # app.IO_text.insert(tk.END, "\n")
             # move the scrolledtext widget position to end
             app.IO_text.see("end")
 
