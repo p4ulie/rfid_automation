@@ -15,7 +15,7 @@ import numato_gpio
 from evdev import InputDevice, categorize, ecodes
 from evdev_text_wrapper_asyncio import scancodes, capscodes, evdev_readline
 
-import sqlite3
+import csv
 
 rfid_tag_id = "empty"
 gpio_ports = 16
@@ -179,10 +179,18 @@ async def btn_send_nok_handler():
     logger.debug("Manually triggered send signal NOK on port %s" % port_result_ok)
     numato_gpio.set(port_result_nok)
 
-def db_log_entry(date, id):
-    logger.debug("Storing RFID %s in database with date %s" % (id, date))
-    db_connection.execute('INSERT INTO rfid values (?, ?)', (date, id) )
-    db_connection.commit()
+def log_entry(date, id):
+
+    file_name = "rfid_log_%s.csv" % datetime.now().strftime('%Y-%m-%d-%H')
+    logger.debug("Storing RFID % swith date %s in .csv file %s " % (id, date, file_name))
+
+    with open(file_name, 'a', newline='') as csvfile:
+        csv_writer = csv.writer(csvfile,
+            delimiter=',',
+            quotechar='"',
+            quoting=csv.QUOTE_MINIMAL
+        )
+        csv_writer.writerow([date, id])
 
 async def rfid_reader_loop():
     global rfid_tag_id
@@ -243,7 +251,7 @@ async def main_work_loop():
                     app.IO_text.insert(tk.END, "%s: RFID tag not detected, setting port %s\n" % (current_datetime_formatted, port_result_nok))
                     numato_gpio.set(port_result_nok)
 
-                db_log_entry(datetime.now(timezone.utc), rfid_tag_id)
+                log_entry(datetime.now(timezone.utc), rfid_tag_id)
 
                 rfid_tag_id = "empty"
 
@@ -275,16 +283,6 @@ if __name__ == '__main__':
 
     # add ch to logger
     logger.addHandler(logger_file)
-
-    # database connection init
-    db_file = config['Database_Sqlite']['File']
-    logger.debug("Open database %s" % db_file)
-    db_connection = sqlite3.connect(db_file)
-    logger.debug("Create table if not exists")
-    db_connection.execute("""CREATE TABLE IF NOT EXISTS rfid(
-                              date text PRIMARY KEY,
-                              id varchar(15) NOT NULL)"""
-                          )
 
     logger.debug("Opening GPIO port %s" % config['GpioDeviceSettings']['Name'])
     numato_gpio = numato_gpio.numato_gpio(
@@ -334,6 +332,3 @@ if __name__ == '__main__':
 
     # start GUI event processing loop
     async_mainloop(window)
-
-    db_connection.close()
-    logger.debug("Database connection closed.")
