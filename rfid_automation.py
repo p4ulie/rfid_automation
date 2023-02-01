@@ -65,7 +65,7 @@ class Application(tk.Frame):
 
     async def btn_cycle_start_stop_handler(self):
         self.cycle_start_stop = not self.cycle_start_stop
-        logger.info("State of the processing set to %s" % self.cycle_start_stop)
+        logger.debug("State of the processing set to %s" % self.cycle_start_stop)
         if self.cycle_start_stop is True:
             self.btn_cycle_start_stop["text"] = "Tap to disable"
             self.btn_cycle_start_stop["activeforeground"] = "black"
@@ -80,15 +80,15 @@ class Application(tk.Frame):
             self.btn_cycle_start_stop["bg"] = "darkgreen"
 
 async def btn_send_ok_handler():
-    logger.info("Manually triggered send signal OK on port %s" % port_result_ok)
+    logger.debug("Manually triggered send signal OK on port %s" % port_result_ok)
     numato_gpio.set(port_result_ok)
 
 async def btn_send_nok_handler():
-    logger.info("Manually triggered send signal NOK on port %s" % port_result_ok)
+    logger.debug("Manually triggered send signal NOK on port %s" % port_result_ok)
     numato_gpio.set(port_result_nok)
 
 def db_log_entry(date, id):
-    logger.info("Storing RFID %s in database with date %s" % (id, date))
+    logger.debug("Storing RFID %s in database with date %s" % (id, date))
     db_connection.execute('INSERT INTO rfid values (?, ?)', (date, id) )
     db_connection.commit()
 
@@ -103,7 +103,7 @@ async def main_work_loop():
     while True:
         if app.cycle_start_stop:
 
-            logger.info("Start new worker cycle")
+            logger.debug("Start new worker cycle")
 
             # clear the scrolled text widget
             # app.IO_text.delete (1.0, tk.END)
@@ -111,7 +111,7 @@ async def main_work_loop():
             current_datetime = datetime.now()
             current_datetime_formatted = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
 
-            logger.info("Read conveyor sensor port (%s)" % config['GpioDeviceSettings']['PortConveyorSensor'])
+            logger.debug("Read conveyor sensor port (%s)" % config['GpioDeviceSettings']['PortConveyorSensor'])
             conveyor_sensor_port = config['GpioDeviceSettings']['PortConveyorSensor']
             conveyor_sensor = numato_gpio.read(conveyor_sensor_port)
             # conveyor_sensor = 1
@@ -119,9 +119,9 @@ async def main_work_loop():
             app.IO_text.insert(tk.END, "%s: Conveyor sensor value: %s\n" % (current_datetime_formatted, conveyor_sensor))
 
             if conveyor_sensor == 1:
-                logger.info("Conveyor sensor triggered")
+                logger.debug("Conveyor sensor triggered")
 
-                logger.info("Clearing OK/NOK port state")
+                logger.debug("Clearing OK/NOK port state")
                 numato_gpio.clear(port_result_ok)
                 numato_gpio.clear(port_result_nok)
 
@@ -130,13 +130,13 @@ async def main_work_loop():
                 # move the scrolledtext widget position to end
                 app.IO_text.see("end")
 
-                logger.info("Last RFID value detected: %s" % rfid_tag_id)
+                logger.debug("Last RFID value detected: %s" % rfid_tag_id)
                 if rfid_tag_id != "empty":
-                    logger.info("Send signal OK on port %s" % port_result_ok)
+                    logger.debug("Send signal OK on port %s" % port_result_ok)
                     app.IO_text.insert(tk.END, "%s: RFID tag: %s, setting port %s\n" % (current_datetime_formatted, rfid_tag_id, port_result_ok))
                     numato_gpio.set(port_result_ok)
                 else:
-                    logger.info("Send signal NOK on port %s" % port_result_nok)
+                    logger.debug("Send signal NOK on port %s" % port_result_nok)
                     app.IO_text.insert(tk.END, "%s: RFID tag not detected, setting port %s\n" % (current_datetime_formatted, port_result_nok))
                     numato_gpio.set(port_result_nok)
 
@@ -175,15 +175,15 @@ if __name__ == '__main__':
 
     # database connection init
     db_file = config['Database_Sqlite']['File']
-    logger.info("Open database %s" % db_file)
+    logger.debug("Open database %s" % db_file)
     db_connection = sqlite3.connect(db_file)
-    logger.info("Create table if not exists")
+    logger.debug("Create table if not exists")
     db_connection.execute("""CREATE TABLE IF NOT EXISTS rfid(
                               date text PRIMARY KEY,
                               id varchar(15) NOT NULL)"""
                           )
 
-    logger.info("Opening GPIO port %s" % config['GpioDeviceSettings']['Name'])
+    logger.debug("Opening GPIO port %s" % config['GpioDeviceSettings']['Name'])
     numato_gpio = numato_gpio.numato_gpio(
         com_port=config['GpioDeviceSettings']['Name'],
         com_speed=config['GpioDeviceSettings']['Speed'],
@@ -194,8 +194,9 @@ if __name__ == '__main__':
     rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
     rfid_reader_timeout = int(config['RfidReaderDeviceSettings']['Timeout'])
     rfid_reader.grab()
+    logger.debug("RFID reader %s opened" % config['RfidReaderDeviceSettings']['Name'])
 
-    logger.info("Setting IO mask and direction")
+    logger.debug("Setting IO mask and direction")
     # set port 0 to input, ports 5,6 to output
     numato_gpio.iomask(int("0000000001100001",2))   # 1 = unmask, 0 = mask
     numato_gpio.iodirall(int("0000000000000001",2))   # 1 = input, 0 = output
@@ -203,22 +204,22 @@ if __name__ == '__main__':
     port_result_ok = config['GpioDeviceSettings']['PortResultOK']
     port_result_nok = config['GpioDeviceSettings']['PortResultNOK']
 
-    logger.info("Creating window")
+    logger.debug("Creating window")
     window = tk.Tk()
     app = Application(master=window)
     window.minsize(width=1000, height=250)
 
-    logger.info("Defining asynchronuous RFID reading loop")
+    logger.debug("Defining asynchronuous RFID reading loop")
     # start RFID reader loop
     asyncio.get_event_loop_policy().get_event_loop().create_task(rfid_reader_loop())
 
-    logger.info("Defining main worker loop")
+    logger.debug("Defining main worker loop")
     # start main work loop
     asyncio.get_event_loop_policy().get_event_loop().create_task(main_work_loop())
 
-    logger.info("Starting main window event processing loop")
+    logger.debug("Starting main window event processing loop")
     # start GUI event processing loop
     async_mainloop(window)
 
     db_connection.close()
-    logger.info("Database connection closed.")
+    logger.debug("Database connection closed.")
