@@ -28,7 +28,7 @@ class Application(tk.Frame):
     cycle_start_stop = False
     gpio_states = [0 for x in range(gpio_ports)]
 
-    def __init__(self, master=None):
+    def __init__(self, master=None, start_enabled=False):
         super().__init__(master)
         self.master = master
 
@@ -45,6 +45,10 @@ class Application(tk.Frame):
             activebackground="darkgreen", bg="darkgreen"
         )
         self.btn_cycle_start_stop.pack(side="top")
+
+        if start_enabled:
+            self.cycle_start_stop = False
+            self.btn_cycle_start_stop_flip_label()
 
         self.btn_send_OK = tk.Button(
             self.frm_buttons,
@@ -143,7 +147,7 @@ class Application(tk.Frame):
 
         self.canvas_ledbar.pack()
 
-    async def btn_cycle_start_stop_handler(self):
+    def btn_cycle_start_stop_flip_label(self):
         self.cycle_start_stop = not self.cycle_start_stop
         logger.debug("State of the processing set to %s" % self.cycle_start_stop)
         if self.cycle_start_stop is True:
@@ -158,6 +162,14 @@ class Application(tk.Frame):
             self.btn_cycle_start_stop["fg"] = "white"
             self.btn_cycle_start_stop["activebackground"] = "darkgreen"
             self.btn_cycle_start_stop["bg"] = "darkgreen"
+
+    async def btn_cycle_start_stop_handler(self):
+        self.btn_cycle_start_stop_flip_label()
+
+    def on_closing(self):
+        self.cycle_start_stop = True
+        self.btn_cycle_start_stop_flip_label()
+        self.master.destroy()
 
 async def btn_send_ok_handler():
     logger.debug("Manually triggered send signal OK on port %s" % port_result_ok)
@@ -299,9 +311,15 @@ if __name__ == '__main__':
     port_result_ok = config['GpioDeviceSettings']['PortResultOK']
     port_result_nok = config['GpioDeviceSettings']['PortResultNOK']
 
+    if config['Application']['StartEnabled'] == "True":
+        start_enabled = True
+    else:
+        start_enabled = False
+
     logger.debug("Creating window")
     window = tk.Tk()
-    app = Application(master=window)
+    app = Application(master=window, start_enabled=start_enabled)
+    window.protocol("WM_DELETE_WINDOW", app.on_closing)
     window.minsize(width=1000, height=250)
 
     logger.debug("Defining asynchronuous RFID reading loop")
@@ -313,6 +331,7 @@ if __name__ == '__main__':
     asyncio.get_event_loop_policy().get_event_loop().create_task(main_work_loop())
 
     logger.debug("Starting main window event processing loop")
+
     # start GUI event processing loop
     async_mainloop(window)
 
