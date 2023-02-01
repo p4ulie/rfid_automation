@@ -175,7 +175,6 @@ def db_log_entry(date, id):
 async def rfid_reader_loop():
     global rfid_tag_id
     while True:
-        # read the RFID tag's ID
         rfid_tag_id = await evdev_readline(rfid_reader)
 
 async def main_work_loop():
@@ -197,7 +196,7 @@ async def main_work_loop():
             logger.debug("Start new worker cycle")
 
             # clear the scrolled text widget
-            # app.IO_text.delete (1.0, tk.END)
+            # app.IO_text.delete (0.0, tk.END)
 
             current_datetime = datetime.now()
             current_datetime_formatted = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
