@@ -18,6 +18,7 @@ from evdev_text_wrapper_asyncio import scancodes, capscodes, evdev_readline
 import sqlite3
 
 rfid_tag_id = "empty"
+gpio_ports = 16
 
 class Application(tk.Frame):
     """
@@ -25,55 +26,134 @@ class Application(tk.Frame):
     widget handlers
     """
     cycle_start_stop = False
+    gpio_states = [0 for x in range(gpio_ports)]
 
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
 
-        self.canvas = tk.Canvas(master=window, width=640, height=200)
+        self.frm_buttons = tk.Frame(master=self.master)
+        self.frm_buttons.pack(side="left")
 
-        self.btn_cycle_start_stop = tk.Button(self,
-                                              text="Tap\nto\nenable",
-                                              command=async_handler(self.btn_cycle_start_stop_handler),
-                                              width=10, height=5,
-                                              font=font.Font(size=14),
-                                              fg="white", activeforeground="white",
-                                              activebackground="darkgreen", bg="darkgreen"
-                                              )
-        self.btn_cycle_start_stop.pack(side="top", fill=tk.BOTH, expand=tk.NO)
+        self.btn_cycle_start_stop = tk.Button(
+            self.frm_buttons,
+            text="Tap\nto\nenable",
+            command=async_handler(self.btn_cycle_start_stop_handler),
+            width=10, height=5,
+            font=font.Font(size=14),
+            fg="white", activeforeground="white",
+            activebackground="darkgreen", bg="darkgreen"
+        )
+        self.btn_cycle_start_stop.pack(side="top")
 
-        self.btn_send_OK = tk.Button(self,
-                                      text="Send\nOK\nsignal",
-                                      command=async_handler(btn_send_ok_handler),
-                                      width=10, height=5,
-                                      font=font.Font(size=14)
-                                      )
-        self.btn_send_OK.pack(side="top", fill=tk.BOTH, expand=tk.NO)
+        self.btn_send_OK = tk.Button(
+            self.frm_buttons,
+            text="Send\nOK\nsignal",
+            command=async_handler(btn_send_ok_handler),
+            width=10, height=5,
+            font=font.Font(size=14)
+        )
+        self.btn_send_OK.pack(side="top")
 
-        self.btn_send_NOK = tk.Button(self,
-                                      text="Send\nNOK\nsignal",
-                                      command=async_handler(btn_send_nok_handler),
-                                      width=10, height=5,
-                                      font=font.Font(size=14)
-                                      )
-        self.btn_send_NOK.pack(side="top", fill=tk.BOTH, expand=tk.NO)
+        self.btn_send_NOK = tk.Button(
+            self.frm_buttons,
+            text="Send\nNOK\nsignal",
+            command=async_handler(btn_send_nok_handler),
+            width=10, height=5,
+            font=font.Font(size=14)
+        )
+        self.btn_send_NOK.pack(side="top")
+
+        self.canvas_ledbar = tk.Canvas(
+            master=self.master,
+            width=250,
+            height=110
+        )
+        self.canvas_ledbar.pack(side="left")
+
+        self.draw_led_labels()
+        self.draw_led_lights(self.gpio_states)
 
         self.IO_text = tkst.ScrolledText()
-        self.IO_text.pack(side="right", fill=tk.BOTH, expand=tk.YES)
+        self.IO_text.pack(side="left")
 
         self.pack()
+
+    def draw_led_labels(self):
+        start_x = 10
+        start_y = 10
+        width = 20
+        height = 20
+        spacing_x = 10
+        spacing_y = 30
+
+        # first row of labels
+        for i in range(8):
+            label = tk.Label(master=self.canvas_ledbar, text=i)
+            label.place(x=start_x + i*(width + spacing_x ) + 2,
+                        y=start_y + height + 2)
+
+        # second row of labels
+        for i in range(8):
+            label = tk.Label(master=self.canvas_ledbar, text=i+8)
+            label.place(x=start_x + i*(width + spacing_x ) + 2,
+                        y=start_y + height + spacing_y + height + 2)
+
+    def draw_led_lights(self, gpio_states):
+        self.widget_list_oval = []
+
+        start_x = 10
+        start_y = 10
+        width = 20
+        height = 20
+        spacing_x = 10
+        spacing_y = 30
+
+        # first row of LEDs
+        for i in range(8):
+            if gpio_states[i] == 0:
+                color = "darkgreen"
+            else:
+                color = "lightgreen"
+            self.widget_list_oval.append(
+                self.canvas_ledbar.create_oval(
+                    start_x + i*(width + spacing_x),
+                    start_y,
+                    start_x + i*(width + spacing_x) + width,
+                    start_y + height,
+                    fill=color
+                )
+            )
+
+        # second row of LEDs
+        for i in range(8):
+            if gpio_states[i + 8] == 0:
+                color = "darkgreen"
+            else:
+                color = "lightgreen"
+            self.widget_list_oval.append(
+                self.canvas_ledbar.create_oval(
+                    start_x + i*(width + spacing_x),
+                    start_y + height + spacing_y,
+                    start_x + i*(width + spacing_x) + width,
+                    start_y + height + spacing_y + height,
+                    fill=color
+                )
+            )
+
+        self.canvas_ledbar.pack()
 
     async def btn_cycle_start_stop_handler(self):
         self.cycle_start_stop = not self.cycle_start_stop
         logger.debug("State of the processing set to %s" % self.cycle_start_stop)
         if self.cycle_start_stop is True:
-            self.btn_cycle_start_stop["text"] = "Tap to disable"
+            self.btn_cycle_start_stop["text"] = "Tap\nto\ndisable"
             self.btn_cycle_start_stop["activeforeground"] = "black"
             self.btn_cycle_start_stop["fg"] = "black"
             self.btn_cycle_start_stop["activebackground"] = "lightgreen"
             self.btn_cycle_start_stop["bg"] = "lightgreen"
         else:
-            self.btn_cycle_start_stop["text"] = "Tap to enable"
+            self.btn_cycle_start_stop["text"] = "Tap\nto\nenable"
             self.btn_cycle_start_stop["activeforeground"] = "white"
             self.btn_cycle_start_stop["fg"] = "white"
             self.btn_cycle_start_stop["activebackground"] = "darkgreen"
@@ -101,6 +181,17 @@ async def rfid_reader_loop():
 async def main_work_loop():
     global rfid_tag_id
     while True:
+        gpio_states = [0 for x in range(gpio_ports)]
+
+        gpio_states_bin_str = "{:016b}".format(numato_gpio.readall())
+        logger.debug("State of GPIO ports: %s" % gpio_states_bin_str)
+
+        for i in range(gpio_ports):
+            gpio_states[15-i] = int(gpio_states_bin_str[i])
+
+        if app is not None:
+            app.draw_led_lights(gpio_states)
+
         if app.cycle_start_stop:
 
             logger.debug("Start new worker cycle")
@@ -112,9 +203,9 @@ async def main_work_loop():
             current_datetime_formatted = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
 
             logger.debug("Read conveyor sensor port (%s)" % config['GpioDeviceSettings']['PortConveyorSensor'])
-            conveyor_sensor_port = config['GpioDeviceSettings']['PortConveyorSensor']
-            conveyor_sensor = numato_gpio.read(conveyor_sensor_port)
-            # conveyor_sensor = 1
+            conveyor_sensor_port = int(config['GpioDeviceSettings']['PortConveyorSensor'])
+            # conveyor_sensor = numato_gpio.read(conveyor_sensor_port)
+            conveyor_sensor = gpio_states[conveyor_sensor_port]
 
             app.IO_text.insert(tk.END, "%s: Conveyor sensor value: %s\n" % (current_datetime_formatted, conveyor_sensor))
 
@@ -187,7 +278,8 @@ if __name__ == '__main__':
     numato_gpio = numato_gpio.numato_gpio(
         com_port=config['GpioDeviceSettings']['Name'],
         com_speed=config['GpioDeviceSettings']['Speed'],
-        com_timeout=1
+        com_timeout=1,
+        gpio_ports=gpio_ports
     )
 
     # initialize the RFID reader and grab the device so system won't catch events
