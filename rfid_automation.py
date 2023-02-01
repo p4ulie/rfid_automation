@@ -75,7 +75,7 @@ class Application(tk.Frame):
         self.draw_led_lights(self.gpio_states)
 
         self.IO_text = tkst.ScrolledText()
-        self.IO_text.pack(side="left")
+        self.IO_text.pack(side="left", fill=tk.BOTH, expand="true")
 
         self.pack()
 
