@@ -181,7 +181,9 @@ async def btn_send_nok_handler():
 
 def log_entry(date, id):
 
-    file_name = "rfid_log_%s.csv" % datetime.now().strftime('%Y-%m-%d-%H')
+    file_name = "%s/%s_%s.csv" % (config['CSV']['Path'],
+                                  config['CSV']['FileBase'],
+                                  datetime.now().strftime('%Y-%m-%d-%H'))
     logger.debug("Storing RFID % swith date %s in .csv file %s " % (id, date, file_name))
 
     with open(file_name, 'a', newline='') as csvfile:
