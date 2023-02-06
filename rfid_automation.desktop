@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=RFID
+Comment=
+Exec=/usr/bin/rfid_automation/rfid_automation.py
+Icon=/usr/bin/rfid_automation/rfid_automation.png
+Path=/usr/bin/rfid_automation
+Terminal=false
+StartupNotify=false
+GenericName=RFID automation application

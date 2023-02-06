@@ -267,7 +267,7 @@ async def main_work_loop():
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()
-    config.read('settings.ini')
+    config.read('rfid_automation.cfg')
 
     # create logger
     logger = logging.getLogger('rfid_automation')
