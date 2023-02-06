@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 
+import sys
 import asyncio
 import configparser
 from datetime import datetime, timezone
 import logging
 
 import tkinter as tk
+import tkinter.messagebox as messagebox
 import tkinter.scrolledtext as tkst
 import tkinter.font as font
 from async_tkinter_loop import async_handler, async_mainloop
@@ -288,18 +290,36 @@ if __name__ == '__main__':
     logger.addHandler(logger_file)
 
     logger.debug("Opening GPIO port %s" % config['GpioDeviceSettings']['Name'])
-    numato_gpio = numato_gpio.numato_gpio(
-        com_port=config['GpioDeviceSettings']['Name'],
-        com_speed=config['GpioDeviceSettings']['Speed'],
-        com_timeout=1,
-        gpio_ports=gpio_ports
-    )
+    try:
+        numato_gpio = numato_gpio.numato_gpio(
+            com_port=config['GpioDeviceSettings']['Name'],
+            com_speed=config['GpioDeviceSettings']['Speed'],
+            com_timeout=1,
+            gpio_ports=gpio_ports
+        )
+    except:
+        error_message = "Could not open GPIO port %s" % config['GpioDeviceSettings']['Name']
+        logger.error(error_message)
+        messagebox.showerror(
+            title="Serial port",
+            message=error_message
+        )
+        sys.exit(error_message)
 
     # initialize the RFID reader and grab the device so system won't catch events
+    logger.debug("Opening RFID reader %s" % config['RfidReaderDeviceSettings']['Name'])
     if config['RfidReaderDeviceSettings']['Enabled'] == "True":
-        rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
-        rfid_reader.grab()
-        logger.debug("RFID reader %s opened" % config['RfidReaderDeviceSettings']['Name'])
+        try:
+            rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
+            rfid_reader.grab()
+        except:
+            error_message = "Could not open RFID reader %s" % config['RfidReaderDeviceSettings']['Name']
+            logger.error(error_message)
+            messagebox.showerror(
+                title="RFID reader",
+                message=error_message
+            )
+            sys.exit(error_message)
     else:
         logger.debug("RFID reader disabled")
 
@@ -318,6 +338,7 @@ if __name__ == '__main__':
 
     logger.debug("Creating window")
     window = tk.Tk()
+    window.title('RFID automation')
     app = Application(master=window, start_enabled=start_enabled)
     window.protocol("WM_DELETE_WINDOW", app.on_closing)
     window.minsize(width=1000, height=250)
