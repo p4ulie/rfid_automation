@@ -1,14 +1,22 @@
-# Loop example:
+# Installation
 
-        if conveyor_sensor GPIO port 0 == 1:
-            "Set 0 to GPIO port 5"
-            "Set 0 to GPIO port 6"
+**_NOTE: User running the installation script needs to be sudo-capable._** 
 
-            result = "Read output of RFID reader (timeout?)"
+```shell
+git clone https://github.com/p4ulie/rfid_automation.git
+cd rfid_automation
+sudo ./install.sh
+```
 
-            print("Store time, RFID tag (even not sucessfull read with null) id to DB")
+[Installer script](install.sh):
+* copies application files to the _/usr/bin/rfid_automation_ directory
+* application desktop entry (icon, system menu item for application) _rfid_automation.desktop_ into _/usr/share/applications/_
+* sets the permissions of files to enable execution
 
-            if result:
-                OK  = print("Set 1 to GPIO port 5")
-                NOK = print("Set 1 to GPIO port 6")
+# Update
 
+```shell
+cd rfid_automation
+git pull
+sudo ./install.sh
+```
