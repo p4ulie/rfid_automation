@@ -1,5 +1,12 @@
 # Installation
 
+## Prerequisites
+
+Install Python modules:
+```shell
+pip install -r requirements.txt
+```
+
 **_NOTE: User running the installation script needs to be sudo-capable._** 
 
 ```shell
@@ -20,3 +27,15 @@ cd rfid_automation
 git pull
 sudo ./install.sh
 ```
+
+# After installation - optional steps
+
+## Auto-start
+
+To start the application automatically after user log-in, copy the [rfid_automation.desktop](rfid_automation.desktop) file to the subdirectory
+_~/.config/autostart_ in the user's home directory
+
+## Desktop icon
+
+To display an icon on the desktop, after installation copy the [rfid_automation.desktop](rfid_automation.desktop) file to the subdirectory
+_~/Desktop_ in the user's home directory
