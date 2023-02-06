@@ -35,3 +35,7 @@ _~/.config/autostart_ in the user's home directory
 
 To display an icon on the desktop, after installation copy the [rfid_automation.desktop](rfid_automation.desktop) file to the subdirectory
 _~/Desktop_ in the user's home directory
+
+# Application
+
+![Application window](docs/rfid_automation.png)
