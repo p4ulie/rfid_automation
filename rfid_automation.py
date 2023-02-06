@@ -298,7 +298,6 @@ if __name__ == '__main__':
     # initialize the RFID reader and grab the device so system won't catch events
     if config['RfidReaderDeviceSettings']['Enabled'] == "True":
         rfid_reader = InputDevice(config['RfidReaderDeviceSettings']['Name'])
-        rfid_reader_timeout = int(config['RfidReaderDeviceSettings']['Timeout'])
         rfid_reader.grab()
         logger.debug("RFID reader %s opened" % config['RfidReaderDeviceSettings']['Name'])
     else:
