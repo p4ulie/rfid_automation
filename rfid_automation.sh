@@ -6,6 +6,6 @@ cd "${INSTALLATION_DIRECTORY}"
 
 while :
 do
-  python3 rfid_automation.py
+  python3 "${INSTALLATION_DIRECTORY}/rfid_automation.py"
   sleep 1
 done

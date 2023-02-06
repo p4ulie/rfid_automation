@@ -20,6 +20,11 @@ cp evdev_text_wrapper_asyncio.py "${INSTALLATION_DIRECTORY}"
 
 cp rfid_automation.desktop /usr/share/applications/
 
+echo "Setting permissions..."
+chmod 755 "${INSTALLATION_DIRECTORY}/rfid_automation.py"
+chmod 755 "${INSTALLATION_DIRECTORY}/rfid_automation.sh"
+chmod 755 /usr/share/applications/rfid_automation.desktop
+
 echo "Installation finished."
 
 exit 0
