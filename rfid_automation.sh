@@ -4,8 +4,10 @@ INSTALLATION_DIRECTORY="/usr/bin/rfid_automation"
 
 cd "${INSTALLATION_DIRECTORY}"
 
-while :
-do
-  python3 "${INSTALLATION_DIRECTORY}/rfid_automation.py"
-  sleep 1
-done
+python3 "${INSTALLATION_DIRECTORY}/rfid_automation.py"
+
+#while :
+#do
+#  python3 "${INSTALLATION_DIRECTORY}/rfid_automation.py"
+#  sleep 1
+#done
