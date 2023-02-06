@@ -2,16 +2,12 @@
 
 ## Prerequisites
 
-Install Python modules:
-```shell
-pip install -r requirements.txt
-```
-
 **_NOTE: User running the installation script needs to be sudo-capable._** 
 
 ```shell
 git clone https://github.com/p4ulie/rfid_automation.git
 cd rfid_automation
+pip install -r requirements.txt
 sudo ./install.sh
 ```
 
