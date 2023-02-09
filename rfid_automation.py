@@ -201,6 +201,7 @@ async def rfid_reader_loop():
     global rfid_tag_id
     while True and (config['RfidReaderDeviceSettings']['Enabled'] == "True"):
         rfid_tag_id = await evdev_readline(rfid_reader)
+        app.IO_text.insert(tk.END, "RFID reader detected %s\n" % (rfid_tag_id))
 
 async def main_work_loop():
     global rfid_tag_id
@@ -232,7 +233,6 @@ async def main_work_loop():
 
             logger.debug("Read conveyor sensor port (%s)" % config['GpioDeviceSettings']['PortConveyorSensor'])
             conveyor_sensor_port = int(config['GpioDeviceSettings']['PortConveyorSensor'])
-            # conveyor_sensor = numato_gpio.read(conveyor_sensor_port)
             conveyor_sensor = gpio_states[conveyor_sensor_port]
 
             # app.IO_text.insert(tk.END, "%s: Conveyor sensor value: %s\n" % (current_datetime_formatted, conveyor_sensor))
@@ -240,8 +240,7 @@ async def main_work_loop():
             if conveyor_sensor == 1:
                 logger.debug("Conveyor sensor triggered")
 
-
-                app.IO_text.insert(tk.END, "%s: RFID tag detected\n" % current_datetime_formatted)
+                app.IO_text.insert(tk.END, "%s: Conveyor sensor triggered\n" % current_datetime_formatted)
 
                 # # move the scrolledtext widget position to end
                 app.IO_text.see("end")
